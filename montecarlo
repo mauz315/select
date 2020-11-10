@@ -1,0 +1,17 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+#Importo datos
+file_name = "BD - copia"
+main_path = ("F:\\Inversiones\\VP_Inversiones\\SIM\\Research\\2. Top down\\Commodities\\Backtesting\\")
+file_path = (file_name + ".xlsx")
+sheet_name = "Datos Diarios BBG"
+
+df = pd.read_excel(main_path + "\\" + file_path, sheet_name = sheet_name, parse_dates = True, index_col = 0)
+
+#Selecciono los nodos curvas de los commodities
+selected_tickers = ['CO1 Comdty', 'CO2 Comdty', 'CO3 Comdty', 'CO4 Comdty', 'CO5 Comdty', 'HG1 COMB Comdty', 'HG2 COMB Comdty', 'HG3 COMB Comdty', 'HG4 COMB Comdty',
+                   'HG5 COMB Comdty', 'GC1 COMB Comdty', 'GC2 COMB Comdty', 'GC3 COMB Comdty', 'GC4 COMB Comdty', 'GC5 COMB Comdty']
+df = df.loc[:, selected_tickers].dropna()
+

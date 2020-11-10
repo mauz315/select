@@ -1,0 +1,102 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+#Importo datos
+file_name = "BD - copia"
+main_path = ("F:\\Inversiones\\VP_Inversiones\\SIM\\Research\\2. Top down\\Commodities\\Backtesting\\")
+file_path = (file_name + ".xlsx")
+sheet_name = "Datos Diarios BBG"
+
+df = pd.read_excel(main_path + "\\" + file_path, sheet_name = sheet_name, parse_dates = True, index_col = 0)
+
+#Selecciono los nodos curvas de los commodities
+selected_tickers = ['CO1 Comdty', 'CO2 Comdty', 'CO3 Comdty', 'CO4 Comdty', 'CO5 Comdty', 'HG1 COMB Comdty', 'HG2 COMB Comdty', 'HG3 COMB Comdty', 'HG4 COMB Comdty',
+                   'HG5 COMB Comdty', 'GC1 COMB Comdty', 'GC2 COMB Comdty', 'GC3 COMB Comdty', 'GC4 COMB Comdty', 'GC5 COMB Comdty']
+df = df.loc[:, selected_tickers].dropna()
+
+#Organizo nombres
+df.columns = [x.replace(' Comdty', '').replace(' COMB', '') for x in df.columns]
+df.index.names = ['Fechas']
+commodities_tickers = ['CO', 'HG', 'GC']
+
+df = df.groupby(pd.Grouper(freq = 'W')).last()
+
+prices = df.filter(like = '1') #Filtra los commodities que se vencen mas temprano (1)
+next_contracts = df.loc[:, ~df.columns.isin(prices.columns)] #Filtra por los contratos que se vencen despes (2,3,4)
+
+def calculate_metrics(tickers, df, periods = 53):
+#Pongo las fechas como indices
+#Calculo el retorno entre 3/2-1 y 4/3-1, agrego nueva columna con los valores
+#basis momentun: la diferencia entre el momentum del nodo mas cercano y el segundo ndo mas cercano
+#basis-momentum is determined by curvature and changes in the slope of the futures curve
+    temp = pd.DataFrame(index = df.index)
+    for commodity in tickers:
+        temp[commodity + ' third to two return'] = df[commodity + '3'] / df[commodity + '2'] - 1
+        temp[commodity + ' fifth to third return'] = df[commodity + '5'] / df[commodity + '3'] - 1
+        temp[commodity + ' basis momentum'] = temp[commodity + ' third to two return'].rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1) - temp[commodity + ' fifth to third return'].rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1)
+#SHago una multiplicacion de los 53 periodos anteriores para cada momentum, se hace (1+x)-1 para cada, y resto el resultado de 3/2 - 4/3
+    7
+    return temp.filter(regex = 'basis momentum').dropna()
+
+def model(metrics, tickers, prices, gap = 0.01):
+
+    metrics.columns = tickers
+    ranking = metrics.rank(axis = 1) #hago un ranking 1 siendo menor y 3 siendo el mayor, por fila
+    weights = ranking
+    #le pongo peso a cada uno, si es 1 es 1/3-gap, si es dos es 1/3 y si es 3, 1/3+gap
+    weights['CO'] = weights['CO'].map({1: (1 / 3) + gap, 2: (1 / 3), 3: (1 / 3) - gap})
+    weights['HG'] = weights['HG'].map({1: (1 / 3) + gap, 2: (1 / 3), 3: (1 / 3) - gap})
+    weights['GC'] = weights['GC'].map({1: (1 / 3) + gap, 2: (1 / 3), 3: (1 / 3) - gap})
+
+    weights = ranking.shift(1).dropna()#elimino la primera fecha nose porque
+    returns = prices.pct_change(1).loc[weights.index[0]:, :]#saco los retornos de la primera parte de la curva, cambio el indice.
+
+    results = pd.DataFrame(returns.mean(axis = 1))#saco promedio por fila
+    results.columns = ['Benchmark return']#retorno del benchmark
+    results['Portfolio return'] = (returns.values * weights.values).sum(axis = 1)#saco el retorno del portafolio
+
+    i = 0
+    portfolio_index = [100]
+    benchmark_index = [100]
+    alpha = []
+    #creo los retornos en base 100 y calculo el alfa
+    for date in results.index:
+        portfolio_index.append(portfolio_index[i] * (1 + results.loc[date, "Portfolio return"]))
+        benchmark_index.append(benchmark_index[i] * (1 + results.loc[date, "Benchmark return"]))
+        alpha.append((portfolio_index[i] / portfolio_index[0] - 1) - (benchmark_index[i] / benchmark_index[0] - 1))
+        i += 1
+    #junto los resultados.
+    results = pd.DataFrame({'Alpha': alpha, 'Benchmark': benchmark_index[1:], 'Portfolio': portfolio_index[1:]}, index =  returns.index)
+
+    return results, weights, ranking
+
+metrics = calculate_metrics(commodities_tickers, next_contracts) #dataframe con el basis momentum
+results, weights, ranking= model(metrics, commodities_tickers, prices,  gap = 0.03)
+
+# Signal frequency description
+signal_freq = ranking.pct_change(1).dropna() #hago variacion % para ver donde hubo cambio de posicion
+signal_freq['Check'] = signal_freq.sum(axis = 1) #creo una nueva columna con la suma de las variaciones
+signal_freq = signal_freq[signal_freq['Check'] != 0] # filtro por las filas que tengas cambio
+signal_freq['Dates'] = signal_freq.index #creo una columna con las fechas
+signal_freq['Dates'] = signal_freq['Dates'].diff() #la diferencia entre la fecha de las señales
+signal_freq = signal_freq.dropna()
+signal_freq['Dates'] = signal_freq['Dates'].dt.days #quito la palabra days
+signal_freq = signal_freq[['Dates']] #dejo solo la columna dates
+signal_freq.columns = ['Time delta']
+signal_freq = signal_freq.shift(-1).dropna() #hago un shift de -1 periodo? porque
+signal_freq['Time delta'] = signal_freq['Time delta'] / 7 #lo divido entre 7 para pasarlo semanal
+
+# Calculate hit-ratio
+hit_ratio = results.loc[signal_freq.index, ['Alpha']] #filtro por la columna añlfa y las fechas de las señales
+hit_ratio['Signal alpha'] = hit_ratio['Alpha'].diff(1).dropna() #saco la diferencia entre los alfas
+hit_ratio['Hit'] = [1 if x > 0 else 0 for x in hit_ratio['Signal alpha']] #1 si genere alfa, 0 si no, en nueva columnda
+hit_ratio['Signal alpha'].describe()
+
+#Pongo la fechas del indice de cada dataframe en una columna nueva.
+results['Date'] = results.index
+weights['Date'] = weights.index
+ranking['Date'] = ranking.index
+signal_freq['Date'] = signal_freq.index
+hit_ratio['Date'] = hit_ratio.index
+metrics['Date'] = metrics.index
