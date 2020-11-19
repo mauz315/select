@@ -24,9 +24,14 @@ col_gold=len(retorno_gold.columns)-1
 
 n_iter = 10000
 
+best_alpha = 0
+best_corr = 1
+corr_obj = 0.2
+contratos = []
+
 for i in range(n_iter):
 
-    # escogiendo contratos 
+    # escogiendo contratos
     oil_ct1 = int(np.random.randn()*col_oil)
     oil_ct2 = int(np.random.randn() * col_oil)
     while oil_ct2 >= oil_ct1:
@@ -50,3 +55,22 @@ for i in range(n_iter):
     print("Contratos Oil " + str(oil_ct1) + "/" + str(oil_ct2))
     print("Contratos Copper " + str(copper_ct1) + "/" + str(copper_ct2))
     print("Contratos Gold " + str(gold_ct1) + "/" + str(gold_ct2))
+
+    # Aquí optimización y modelo ML
+    # Aquí optimización y modelo ML
+    # Aquí optimización y modelo ML
+    # Aquí optimización y modelo ML
+    # Aquí optimización y modelo ML
+
+    alpha = "resultado del modelo"
+    corr = "correlacion de alpha con mkt"
+    if alpha >= best_alpha and corr < corr_obj:
+        best_alpha = alpha
+        best_corr = corr
+        contratos = [[str(oil_ct1) + "/" + str(oil_ct2)],
+                     [str(copper_ct1) + "/" + str(copper_ct2)],
+                     [str(gold_ct1) + "/" + str(gold_ct2)]]
+
+print("El mejor modelo es: " + str(contratos))
+print("Alpha: " + str(best_alpha))
+print("R2: " + str(best_corr))
