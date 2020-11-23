@@ -32,18 +32,24 @@ contratos = []
 for i in range(n_iter):
 
     # escogiendo contratos
-    oil_ct1 = int(np.random.randn()*col_oil)
+    oil_ct1 = int(np.random.randn() *col_oil)
     oil_ct2 = int(np.random.randn() * col_oil)
+    oil_ct3 = int(np.random.randn() * col_oil)
+    oil_ct4 = int(np.random.randn() * col_oil)
     while oil_ct2 >= oil_ct1:
         oil_ct2 = int(np.random.randn() * col_oil)
 
     copper_ct1 = int(np.random.randn() * col_copper)
     copper_ct2 = int(np.random.randn() * col_copper)
+    copper_ct3 = int(np.random.randn() * col_copper)
+    copper_ct4 = int(np.random.randn() * col_copper)
     while copper_ct2 >= copper_ct1:
         copper_ct2 = int(np.random.randn() * col_copper)
 
     gold_ct1 = int(np.random.randn() * col_gold)
     gold_ct2 = int(np.random.randn() * col_gold)
+    gold_ct3 = int(np.random.randn() * col_gold)
+    gold_ct4 = int(np.random.randn() * col_gold)
     while gold_ct2 >= gold_ct1:
         gold_ct2 = int(np.random.randn() * col_gold)
 

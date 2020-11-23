@@ -36,7 +36,7 @@ def calculate_metrics(tickers, df, periods = 53):
         temp[commodity + ' fifth to third return'] = df[commodity + '5'] / df[commodity + '3'] - 1
         temp[commodity + ' basis momentum'] = temp[commodity + ' third to two return'].rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1) - temp[commodity + ' fifth to third return'].rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1)
 #SHago una multiplicacion de los 53 periodos anteriores para cada momentum, se hace (1+x)-1 para cada, y resto el resultado de 3/2 - 4/3
-    7
+
     return temp.filter(regex = 'basis momentum').dropna()
 
 def model(metrics, tickers, prices, gap = 0.01):
