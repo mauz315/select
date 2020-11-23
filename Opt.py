@@ -37,21 +37,51 @@ col_oil=len(retorno_oil.columns)-1
 col_copper=len(retorno_copper.columns)-1
 col_gold=len(retorno_gold.columns)-1
 
-for i in range(col_oil):
-    temp=pd.DataFrame()
+periods=53
+gap=0.3
+for i in col_oil:
+    temp_oil=pd.DataFrame()
     l=i+1
+    l2=i+2
+    l3=i+3
     ret1=df_oil[df_oil.columns[l]]/df_oil[df_oil.columns[i]]-1
-    ret1=ret1.dropna()
-    ret1=pd.DataFrame(ret1)
+    ret12=df_oil[df_oil.columns[l3]]/df_oil[df_oil.columns[l2]]-1
+    temp_oil["OIL"]=ret1.rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1) - ret12.rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1)
+
+#     ret1=ret1.dropna()
+#     ret12=ret12.dropna()
+    temp_oil=temp_oil.dropna()
+#     ret1=pd.DataFrame(ret1)
     for m in range(col_copper):
+        temp_copper=pd.DataFrame()
         n=m+1
+        n2=m+2
+        n3=m+3
         ret2=df_copper[df_copper.columns[n]]/df_copper[df_copper.columns[m]]-1
-        ret2=ret2.dropna()
-        ret2=pd.DataFrame(ret2)
+        ret22=df_copper[df_copper.columns[n3]]/df_copper[df_copper.columns[n2]]-1
+        temp_copper["COPPER"]=ret2.rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1) - ret22.rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1)
+
+#         ret2=ret2.dropna()
+#         ret22=ret22.dropna()
+#         ret2=pd.DataFrame(ret2)
+        temp_copper=temp_copper.dropna()
         for p in range(col_gold):
+            temp_gold=pd.DataFrame()
             o=p+1
-            retorno_gold.columns[p]
+            o2=p+2
+            o3=p+3
             ret3=df_gold[df_gold.columns[o]]/df_gold[df_gold.columns[p]]-1
-            ret3=ret3.dropna()
-            ret3=pd.DataFrame(ret3)
-            ret=ret1.append([ret2, ret3])
+            ret32=df_gold[df_gold.columns[o3]]/df_gold[df_gold.columns[o2]]-1
+            temp_gold["GOLD"]=ret3.rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1) - ret32.rolling(window = periods).apply(lambda x: np.prod(1 + x) - 1)
+
+#             ret3=ret3.dropna()
+#             ret32=ret32.dropna()
+            temp_gold=temp_gold.dropna()
+            df_name= retorno_oil.columns[i]+ " " + retorno_copper.columns[m]+ " " +retorno_gold.columns[p] + ".csv"
+#             df_name= i + m + p
+#             ret3=pd.DataFrame(ret3)
+            basis=pd.concat([temp_oil,temp_copper,temp_gold], axis=1, join_axes=[temp_oil.index])
+            basis=basis.dropna()
+            basis.to_csv('F:\\Inversiones\\VP_Inversiones\\SIM\\Research\\2. Top down\\Commodities\\Backtesting\\Optimizacion\\'+ df_name)
+           
+     
