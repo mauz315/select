@@ -26,7 +26,7 @@ col_oil = len(retorno_oil.columns)-1
 col_copper = len(retorno_copper.columns)-1
 col_gold = len(retorno_gold.columns)-1
 
-n_iter = 10000
+n_iter = 1000
 
 best_alpha = 0
 best_corr = 1
@@ -35,13 +35,16 @@ contratos = []
 periods = 53
 gap = 0.03
 
+prices = df.filter(like = '1') #Filtra los commodities que se vencen mas temprano (1)
+next_contracts = df.loc[:, ~df.columns.isin(prices.columns)] #Filtra por los contratos que se vencen despes (2,3,4)
+
 for i in range(n_iter):
 
     # escogiendo contratos
-    oil_ct4 = int(np.random.randn() * col_oil)
+    oil_ct4 = int(np.random.randn() * col_oil) # mayor a 5
     oil_ct3 = int(np.random.randn() * oil_ct4)
     oil_ct2 = int(np.random.randn() * oil_ct3)
-    oil_ct1 = int(np.random.randn() * oil_ct2)
+    oil_ct1 = int(np.random.randn() * oil_ct2) # mayor a 1
 
     copper_ct4 = int(np.random.randn() * col_copper)
     copper_ct3 = int(np.random.randn() * copper_ct4)
@@ -120,7 +123,7 @@ for i in range(n_iter):
     # Aquí termina optimización y modelo ML
 
     alpha = "resultado del modelo"
-    corr = "correlacion de alpha con mkt"
+    corr = abs("correlacion de alpha con mkt")
     if alpha >= best_alpha and corr < corr_obj:
         best_alpha = alpha
         best_corr = corr
