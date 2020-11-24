@@ -16,6 +16,11 @@ df_copper = pd.read_excel(main_path + "\\" + file_path, sheet_name = sheet_name_
 df_gold = pd.read_excel(main_path + "\\" + file_path, sheet_name = sheet_name_gold, parse_dates = True, index_col = 0, header =1)
 df=pd.read_excel(main_path + "\\" + file_path, sheet_name = sheet_name_todo, parse_dates = True, index_col = 0)
 df=df.dropna(how="all")
+df = df.groupby(pd.Grouper(freq = 'W')).last()
+df_oil = df_oil.groupby(pd.Grouper(freq = 'W')).last()
+df_copper = df_copper.groupby(pd.Grouper(freq = 'W')).last()
+df_gold = df_gold.groupby(pd.Grouper(freq = 'W')).last()
+
 sequence = ['CO1 COMB Comdty','HG1 COMB Comdty', 'GC1 COMB Comdty'] 
 prices = df.filter(sequence)
 
@@ -44,8 +49,8 @@ gap = 0.03
 # prices = df.filter(like = '1') #Filtra los commodities que se vencen mas temprano (1)
 #next_contracts = df.loc[:, ~df.columns.isin(prices.columns)] #Filtra por los contratos que se vencen despes (2,3,4)
 
-for i in range(n_iter):
-# for i in range(1):
+# for i in range(n_iter):
+for i in range(1):
 
     # escogiendo contratos
     oil_ct4 = random.randint(5, col_oil) # mayor a 5
@@ -70,22 +75,22 @@ for i in range(n_iter):
     #     copper_ct2 = int(np.random.randn() * col_copper)
 
     # creando retornos
-    oil_ret1 = df_oil[df_oil.columns[oil_ct2]]/df_oil[df_oil.columns[oil_ct1]]-1
+    oil_ret1 = df_oil[df_oil.columns[oil_ct2-1]]/df_oil[df_oil.columns[oil_ct1-1]]-1
     oil_ret1=oil_ret1.dropna().sort_index()
-    oil_ret2 = df_oil[df_oil.columns[oil_ct4]] / df_oil[df_oil.columns[oil_ct3]] - 1
+    oil_ret2 = df_oil[df_oil.columns[oil_ct4-1]] / df_oil[df_oil.columns[oil_ct3-1]] - 1
     oil_ret2=oil_ret2.dropna().sort_index()
-    copper_ret1 = df_copper[df_copper.columns[copper_ct2]]/df_copper[df_copper.columns[copper_ct1]]-1
+    copper_ret1 = df_copper[df_copper.columns[copper_ct2-1]]/df_copper[df_copper.columns[copper_ct1-1]]-1
     copper_ret1=copper_ret1.dropna().sort_index()
-    copper_ret2 = df_copper[df_copper.columns[copper_ct4]] / df_copper[df_copper.columns[copper_ct3]] - 1
+    copper_ret2 = df_copper[df_copper.columns[copper_ct4-1]] / df_copper[df_copper.columns[copper_ct3-1]] - 1
     copper_ret2=copper_ret2.dropna().sort_index()
-    gold_ret1 = df_gold[df_gold.columns[gold_ct2]]/df_gold[df_gold.columns[gold_ct1]]-1
+    gold_ret1 = df_gold[df_gold.columns[gold_ct2-1]]/df_gold[df_gold.columns[gold_ct1-1]]-1
     gold_ret1=gold_ret1.dropna().sort_index()
-    gold_ret2 = df_gold[df_gold.columns[gold_ct4]] / df_gold[df_gold.columns[gold_ct3]] - 1
+    gold_ret2 = df_gold[df_gold.columns[gold_ct4-1]] / df_gold[df_gold.columns[gold_ct3-1]] - 1
     gold_ret2=gold_ret2.dropna().sort_index()
 
-    oil_contracts = "Oil " + str(oil_ct1) + "/" + str(oil_ct2) + " & " + str(oil_ct3) + "/" + str(oil_ct4)
-    copper_contracts = "Copper " + str(copper_ct1) + "/" + str(copper_ct2) + " & " + str(copper_ct3) + "/" + str(copper_ct4)
-    gold_contracts = "Gold " + str(gold_ct1) + "/" + str(gold_ct2) + " & " + str(gold_ct3) + "/" + str(gold_ct4)
+    oil_contracts = "Oil " + str(oil_ct2) + "/" + str(oil_ct1) + " & " + str(oil_ct4) + "/" + str(oil_ct3)
+    copper_contracts = "Copper " + str(copper_ct2) + "/" + str(copper_ct1) + " & " + str(copper_ct4) + "/" + str(copper_ct3)
+    gold_contracts = "Gold " + str(gold_ct2) + "/" + str(gold_ct1) + " & " + str(gold_ct4) + "/" + str(gold_ct3)
     print("Contratos " + oil_contracts)
     print("Contratos " + copper_contracts)
     print("Contratos " + gold_contracts)
@@ -113,9 +118,9 @@ for i in range(n_iter):
     weights[gold_contracts] = weights[gold_contracts].map({1: (1 / 3) + gap, 2: (1 / 3), 3: (1 / 3) - gap})
 
     weights = ranking.shift(1).dropna()  # elimino la primera fecha nose porque
-    prices1=prices.filter(weights.index,axis=0) #saco precios con el indice de weights
-    returns = prices1.pct_change(1).loc[weights.index[0]:,
-              :]  # saco los retornos de la primera parte de la curva, cambio el indice.
+    prices1 = prices.pct_change(1).loc[weights.index[0]:,
+              :]# saco los retornos de la primera parte de la curva, cambio el indice.
+    returns=prices1.filter(weights.index,axis=0) #saco precios con el indice de weights
     
     results = pd.DataFrame(returns.mean(axis=1))  # saco promedio por fila
     results.columns = ['Benchmark return']  # retorno del benchmark
