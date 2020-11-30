@@ -39,12 +39,12 @@ col_oil = len(retorno_oil.columns) - 1
 col_copper = len(retorno_copper.columns) - 1
 col_gold = len(retorno_gold.columns) - 1
 
-n_iter = 1
+n_iter = 5000
 
 best_alpha = 0
 best_corr = 1
 corr_obj = 0.2
-drawdown_obj = 0.30
+drawdown_obj = 0.20
 contratos = []
 periods = 53
 gap = 0.03
@@ -173,6 +173,9 @@ for itera in range(n_iter):
         best_alpha = alpha
         best_corr = corr
         contratos = [oil_contracts, copper_contracts, gold_contracts]
+        print("Nueva combinación de contratos escogidos")
+        print("Alpha: " + str(best_alpha))
+        print(str(contratos))
 
 print("El mejor modelo es: " + str(contratos))
 print("Alpha: " + str(best_alpha))
