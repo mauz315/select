@@ -39,15 +39,18 @@ col_oil = len(retorno_oil.columns) - 1
 col_copper = len(retorno_copper.columns) - 1
 col_gold = len(retorno_gold.columns) - 1
 
-n_iter = 1000
+n_iter = 1
 
 best_alpha = 0
 best_corr = 1
 corr_obj = 0.2
+drawdown_obj = 0.30
 contratos = []
 periods = 53
 gap = 0.03
 
+alpha_index = pd.DataFrame()
+alpha_max = pd.DataFrame()
 # prices = df.filter(like = '1') #Filtra los commodities que se vencen mas temprano (1)
 # next_contracts = df.loc[:, ~df.columns.isin(prices.columns)] #Filtra por los contratos que se vencen despes (2,3,4)
 
@@ -160,7 +163,13 @@ for itera in range(n_iter):
 
     alpha = coco.iloc[0, 0]
     corr = abs(retornos_["Benchmark return"].corr(retornos_["Alpha Diario"], method="pearson"))
-    if alpha >= best_alpha and corr < corr_obj:
+
+    alpha_index['Alpha'] = results_final['Alpha'] + 100
+    alpha_max['Alpha'] = alpha_index['Alpha'].rolling(window=53).max()
+    max_drawdown = alpha_index['Alpha'] / alpha_max['Alpha'] - 1.0
+    max_drawdown = abs(min(max_drawdown.dropna()))
+
+    if alpha >= best_alpha and corr < corr_obj and max_drawdown < drawdown_obj:
         best_alpha = alpha
         best_corr = corr
         contratos = [oil_contracts, copper_contracts, gold_contracts]
