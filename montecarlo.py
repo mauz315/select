@@ -160,22 +160,25 @@ for itera in range(n_iter):
     alfa_diario.rename(columns={alfa_diario.columns[0]: "Alpha Diario"}, inplace=True)
     retornos_ = pd.concat([results, alfa_diario], axis=1)
     coco = pd.DataFrame(results_final["Alpha"].tail(1))
-
     alpha = coco.iloc[0, 0]
-    corr = abs(retornos_["Benchmark return"].corr(retornos_["Alpha Diario"], method="pearson"))
 
-    alpha_index['Alpha'] = results_final['Alpha'] + 100
-    alpha_max['Alpha'] = alpha_index['Alpha'].rolling(window=53).max()
-    max_drawdown = alpha_index['Alpha'] / alpha_max['Alpha'] - 1.0
-    max_drawdown = abs(min(max_drawdown.dropna()))
+
+    # alpha_index['Alpha'] = results_final['Alpha'] + 100
 
     if alpha >= best_alpha and corr < corr_obj and max_drawdown < drawdown_obj:
-        best_alpha = alpha
-        best_corr = corr
-        contratos = [oil_contracts, copper_contracts, gold_contracts]
-        print("Nueva combinación de contratos escogidos")
-        print("Alpha: " + str(best_alpha))
-        print(str(contratos))
+        corr = abs(retornos_["Benchmark return"].corr(retornos_["Alpha Diario"], method="pearson"))
+        if corr < corr_obj:
+            alpha_max['Alpha'] = results_final['Alpha'].rolling(window=53).max()
+            max_drawdown = results_final['Alpha'] / alpha_max['Alpha'] - 1.0
+            max_drawdown = abs(min(max_drawdown.dropna()))
+            if max_drawdown < drawdown_obj:
+                best_alpha = alpha
+                best_corr = corr
+                contratos = [oil_contracts, copper_contracts, gold_contracts]
+                print("Nueva combinación de contratos escogidos")
+                print(str(contratos))
+                print("Alpha: " + str(best_alpha))
+                print("Drawdown: " + str(best_alpha))
 
 print("El mejor modelo es: " + str(contratos))
 print("Alpha: " + str(best_alpha))
