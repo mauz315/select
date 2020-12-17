@@ -166,7 +166,7 @@ for itera in range(n_iter):
     # alpha_index['Alpha'] = results_final['Alpha'] + 100
 
     if alpha >= best_alpha:
-        corr = abs(retornos_["Benchmark return"].corr(retornos_["Alpha Diario"], method="pearson"))
+        corr = abs(retornos_["Benchmark return"].corr(retornos_["Portfolio return"], method="pearson"))
         if corr < corr_obj:
             alpha_max['Alpha'] = results_final['Alpha'].rolling(window=53).max()
             max_drawdown = results_final['Alpha'] / alpha_max['Alpha'] - 1.0
